@@ -21,29 +21,29 @@ RISC-R (Reduced Instruction Set Computer - Reversible) is designed with the foll
 
 ## Instruction Set
 
-| Opcode | Mnemonic | Syntax              | Description                                                               |
-| ------ | -------- | ------------------- | ------------------------------------------------------------------------- |
-| 0x00   | NOP      | `nop`               | No operation                                                              |
-| 0x01   | ADD      | `add rd, rs`        | Add: rd = rd + rs                                                         |
-| 0x02   | SUB      | `sub rd, rs`        | Subtract: rd = rd - rs                                                    |
-| 0x03   | XOR      | `xor rd, rs`        | Bitwise XOR: rd = rd ^ rs                                                 |
-| 0x04   | ROL      | `rol rd, rs`        | Rotate left: rd = rd rotated left by value in rs                          |
-| 0x05   | ROR      | `ror rd, rs`        | Rotate right: rd = rd rotated right by value in rs                        |
-| 0x08   | SWP      | `swp rd, rs`        | Swap contents of rd and rs                                                |
-| 0x0F   | HLT      | `hlt`               | Halt the program                                                          |
-| 0x21   | ADDI     | `addi rd, imm`      | Add immediate: rd = rd + imm                                              |
-| 0x22   | SUBI     | `subi rd, imm`      | Subtract immediate: rd = rd - imm                                         |
-| 0x23   | XORI     | `xori rd, imm`      | Bitwise XOR with immediate: rd = rd ^ imm                                 |
-| 0x24   | ROLI     | `roli rd, imm`      | Rotate left by immediate: rd = rd rotated left by imm                     |
-| 0x25   | RORI     | `rori rd, imm`      | Rotate right by immediate: rd = rd rotated right by imm                   |
-| 0x29   | MSWP     | `mswp rd, imm(rs)`  | Memory-register swap: Swap contents of rd with memory at address rs + imm |
-| 0x30   | JEQ      | `jeq rs, rt, delta` | Jump if equal: if (rs == rt) step += delta                                |
-| 0x31   | JNE      | `jne rs, rt, delta` | Jump if not equal: if (rs != rt) step += delta                            |
-| 0x32   | JLT      | `jlt rs, rt, delta` | Jump if less than: if (rs < rt) step += delta                             |
-| 0x33   | JGT      | `jgt rs, rt, delta` | Jump if greater than: if (rs > rt) step += delta                          |
-| 0x34   | JLE      | `jle rs, rt, delta` | Jump if less than or equal: if (rs <= rt) step += delta                   |
-| 0x35   | JGE      | `jge rs, rt, delta` | Jump if greater than or equal: if (rs >= rt) step += delta                |
-| 0x36   | JMP      | `jmp delta`         | Unconditional jump: step += delta                                         |
+| Opcode | Syntax              | Description                                                               |
+| ------ | ------------------- | ------------------------------------------------------------------------- |
+| 0x00   | `nop`               | No operation                                                              |
+| 0x01   | `add rd, rs`        | Add: rd = rd + rs                                                         |
+| 0x02   | `sub rd, rs`        | Subtract: rd = rd - rs                                                    |
+| 0x03   | `xor rd, rs`        | Bitwise XOR: rd = rd ^ rs                                                 |
+| 0x04   | `rol rd, rs`        | Rotate left: rd = rd rotated left by value in rs                          |
+| 0x05   | `ror rd, rs`        | Rotate right: rd = rd rotated right by value in rs                        |
+| 0x08   | `swp rd, rs`        | Swap contents of rd and rs                                                |
+| 0x0F   | `hlt`               | Halt the program                                                          |
+| 0x21   | `addi rd, imm`      | Add immediate: rd = rd + imm                                              |
+| 0x22   | `subi rd, imm`      | Subtract immediate: rd = rd - imm                                         |
+| 0x23   | `xori rd, imm`      | Bitwise XOR with immediate: rd = rd ^ imm                                 |
+| 0x24   | `roli rd, imm`      | Rotate left by immediate: rd = rd rotated left by imm                     |
+| 0x25   | `rori rd, imm`      | Rotate right by immediate: rd = rd rotated right by imm                   |
+| 0x29   | `mswp rd, imm(rs)`  | Memory-register swap: Swap contents of rd with memory at address rs + imm |
+| 0x30   | `jeq rs, rt, delta` | Jump if equal: if (rs == rt) step += delta                                |
+| 0x31   | `jne rs, rt, delta` | Jump if not equal: if (rs != rt) step += delta                            |
+| 0x32   | `jlt rs, rt, delta` | Jump if less than: if (rs < rt) step += delta                             |
+| 0x33   | `jgt rs, rt, delta` | Jump if greater than: if (rs > rt) step += delta                          |
+| 0x34   | `jle rs, rt, delta` | Jump if less than or equal: if (rs <= rt) step += delta                   |
+| 0x35   | `jge rs, rt, delta` | Jump if greater than or equal: if (rs >= rt) step += delta                |
+| 0x36   | `jmp delta`         | Unconditional jump: step += delta                                         |
 
 Note: rd, rs, and rt represent registers. imm represents an immediate value. step is the value added to pc after each instruction. delta represents the change in step for jump instructions.
 
@@ -65,6 +65,32 @@ RISC-R implements a unique, reversible jump mechanism:
    - Reverse execution: JMP +n ← [jumped code] ← JMP -n
 
 This approach ensures that all operations, including control flow changes, are reversible, maintaining the fundamental principle of reversible computing in RISC-R.
+
+
+## Binary Instruction Format
+RISC-R uses a variable-length instruction format:
+
+### 2-byte Instruction Format:
+```
+|0 1 2 3 4 5|6|7| 8  9 10 11 |12 13 14 15|
+|  opcode   |f|u|     rd     |    rs     |
+```
+- Bits 0-5: opcode
+- Bit 5: extension flag (1 if instruction is extended to 4 bytes)
+- Bit 6: previous instruction extension flag (used for reverse execution)
+- Bit 7: unused
+- Bits 8-11: rd (destination register)
+- Bits 12-15: rs (source register)
+
+### 4-byte Instruction Format:
+For instructions that require more information (e.g., immediate values or jump offsets), an additional 2 bytes are appended to the basic 2-byte format.
+
+Example: `addi rd, imm`
+```
+|0 1 2 3 4 5|6|7| 8  9 10 11 |12 13 14 15| 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 |
+|  opcode   |1|u|     rd     |   0000    |                    imm                          |
+```
+
 
 ## Getting Started
 
@@ -92,3 +118,8 @@ We welcome contributions to improve the RISC-R architecture, assembler, or simul
 ## Contact
 
 cykim8811@snu.ac.kr
+
+
+
+
+

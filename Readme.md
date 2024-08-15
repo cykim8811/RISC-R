@@ -1,6 +1,6 @@
 # RISC-R: Reduced Instruction Set Computer - Reversible
 
-RISC-R is an innovative computer architecture designed to implement reversible computing principles. It is inspired by the RISC-V architecture but adapted to ensure all operations are reversible.
+RISC-R is an computer architecture designed to implement reversible computing principles. It is inspired by the RISC-V architecture but adapted to ensure all operations are reversible.
 
 ## Repository Contents
 
